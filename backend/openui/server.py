@@ -547,7 +547,24 @@ async def render_audio(name):
     )
 
 
+@router.get("/v1/api_key", tags=["openui/api_key"])
+async def get_or_create_api_key(request: Request):
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Login required")
+
+    user = User.get_by_id(uuid.UUID(user_id).bytes)
+    key_record = ApiKey.get_or_none(ApiKey.user == user)
+    if not key_record:
+        api_key = secrets.token_urlsafe(32)
+        key_record = ApiKey.create(key=api_key, user=user, created_at=datetime.now())
+    return {"api_key": key_record.key}
+
+
 app.include_router(router)
+from .headless_routes import router as headless_router
+
+app.include_router(headless_router)
 app.mount(
     "/assets",
     StaticFiles(directory=Path(__file__).parent / "dist" / "assets", html=True),

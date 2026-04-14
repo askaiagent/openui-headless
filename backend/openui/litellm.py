@@ -11,15 +11,15 @@ def generate_config():
         models.extend(
             [
                 {
-                    "model_name": "gemini-1.5-flash",
+                    "model_name": "gemini-3-flash-preview",
                     "litellm_params": {
-                        "model": "gemini/gemini-1.5-flash-latest",
+                        "model": "gemini/gemini-3-flash-preview",
                     },
                 },
                 {
-                    "model_name": "gemini-1.5-pro",
+                    "model_name": "gemini-1.5-flash",
                     "litellm_params": {
-                        "model": "gemini/gemini-1.5-pro-latest",
+                        "model": "gemini/gemini-1.5-flash-latest",
                     },
                 },
             ]

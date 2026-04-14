@@ -113,7 +113,32 @@ class Usage(BaseModel):
         )
 
 
-CURRENT_VERSION = "2024-05-14"
+class Project(BaseModel):
+    id = BinaryUUIDField(primary_key=True)
+    user = ForeignKeyField(User, backref="projects")
+    name = CharField(null=True)
+    emoji = CharField(null=True)
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
+
+
+class ProjectMessage(BaseModel):
+    id = BinaryUUIDField(primary_key=True)
+    project = ForeignKeyField(Project, backref="messages")
+    role = CharField()  # 'user' or 'assistant'
+    content = CharField()  # The prompt or the raw markdown response
+    html = CharField(null=True)  # Extracted HTML
+    image_url = CharField(null=True)  # Optional image
+    created_at = DateTimeField()
+
+
+class ApiKey(BaseModel):
+    key = CharField(primary_key=True)
+    user = ForeignKeyField(User, backref="api_keys")
+    created_at = DateTimeField()
+
+
+CURRENT_VERSION = "2024-05-15"
 
 
 def alter(schema: SchemaMigration, ops: list[list], version: str) -> bool:
@@ -150,12 +175,30 @@ def perform_migration(schema: SchemaMigration) -> bool:
         schema.save()
         if version != CURRENT_VERSION:
             perform_migration(schema)
+    if schema.version == "2024-05-14":
+        version = "2024-05-15"
+        database.create_tables([Project, ProjectMessage, ApiKey])
+        schema.version = version
+        schema.save()
+        if version != CURRENT_VERSION:
+            perform_migration(schema)
 
 
 def ensure_migrated():
     if not config.DB.exists():
         database.create_tables(
-            [User, Credential, Session, Component, SchemaMigration, Usage, Vote]
+            [
+                User,
+                Credential,
+                Session,
+                Component,
+                SchemaMigration,
+                Usage,
+                Vote,
+                Project,
+                ProjectMessage,
+                ApiKey,
+            ]
         )
         SchemaMigration.create(version=CURRENT_VERSION)
     else:

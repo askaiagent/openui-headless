@@ -11,6 +11,22 @@ class Env(Enum):
     DEV = 3
 
 
+def load_env(path: Path):
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+# Load from backend/.env if it exists
+load_env(Path(__file__).parent.parent / ".env")
+# Load from root/.env if it exists
+load_env(Path(__file__).parent.parent.parent / ".env")
+
+
 try:
     env = os.getenv("OPENUI_ENVIRONMENT", "local")
     if env == "production":
@@ -59,6 +75,7 @@ CORS_ORIGINS = os.getenv(
 ).split(",")
 
 # Model providers
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "xxx")

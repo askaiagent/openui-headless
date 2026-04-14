@@ -37,6 +37,7 @@ if __name__ == "__main__":
         any([arg == "--litellm" for arg in sys.argv])
         or "OPENUI_LITELLM_CONFIG" in os.environ
         or os.path.exists("litellm-config.yaml")
+        or os.getenv("GEMINI_API_KEY") is not None
     )
     # TODO: only render in interactive mode?
     print(
@@ -86,11 +87,12 @@ if __name__ == "__main__":
             else:
                 config_path = generate_config()
 
+            litellm_path = Path(sys.executable).parent / "litellm"
             logger.info(
-                f"Starting LiteLLM in the background with config: {config_path}"
+                f"Starting LiteLLM in the background with config: {config_path} and path: {litellm_path}"
             )
             litellm_process = subprocess.Popen(
-                ["litellm", "--config", config_path, "--port", "4000"],
+                [str(litellm_path), "--config", config_path, "--port", "4000"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
