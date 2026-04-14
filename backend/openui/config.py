@@ -40,7 +40,7 @@ except KeyError:
 
 default_db = Path.home() / ".openui" / "db.sqlite"
 default_db.parent.mkdir(exist_ok=True)
-DB = os.getenv("DATABASE", default_db)
+DB = Path(os.getenv("DATABASE", default_db))
 HOST = os.getenv(
     "OPENUI_HOST",
     "https://localhost:5173" if ENV == Env.DEV else "http://localhost:7878",
