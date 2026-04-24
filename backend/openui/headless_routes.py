@@ -64,6 +64,8 @@ async def create_headless_project(
     user: User = Depends(get_user_from_api_key)
 ):
     data = await request.json()
+    print(f"\n>>> Headless project creation request: {json.dumps(data, indent=2)}\n")
+    logger.info("Headless project creation request: %s", json.dumps(data, indent=2))
     prompt = data.get("prompt")
     model = data.get("model", "gemini-3-flash-preview")
     stream = data.get("stream", False)
@@ -89,6 +91,8 @@ async def iterate_headless_project(
         raise HTTPException(status_code=404, detail="Project not found")
         
     data = await request.json()
+    print(f"\n>>> Headless project iteration request (ID: {project_id}): {json.dumps(data, indent=2)}\n")
+    logger.info("Headless project iteration request (ID: %s): %s", project_id, json.dumps(data, indent=2))
     prompt = data.get("prompt")
     model = data.get("model", "gemini-3-flash-preview")
     stream = data.get("stream", False)
