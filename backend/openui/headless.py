@@ -75,6 +75,8 @@ def extract_html_and_metadata(text: str) -> Tuple[Optional[str], Optional[str], 
     emoji = None
     html = None
     
+    logger.info("[Headless] Extracting HTML and metadata from text (length: %d)", len(text))
+    print(f"[Headless] Extracting HTML and metadata from text (length: {len(text)})")
     # Try to find frontmatter
     frontmatter_match = re.search(r'^---(.*?)---', text, re.DOTALL)
     if frontmatter_match:
@@ -83,14 +85,19 @@ def extract_html_and_metadata(text: str) -> Tuple[Optional[str], Optional[str], 
             if isinstance(metadata, dict):
                 name = metadata.get('name')
                 emoji = metadata.get('emoji')
-        except Exception:
-            pass
+                logger.debug("[Headless] Extracted metadata: name=%s, emoji=%s", name, emoji)
+                print(f"[Headless] Extracted metadata: name={name}, emoji={emoji}")
+        except Exception as e:
+            logger.warning("[Headless] Failed to parse frontmatter: %s", e)
+            print(f"[Headless] Failed to parse frontmatter: {e}")
         
     # Extract HTML
     # First priority: ```html blocks (handle unclosed blocks too)
     html_match = re.search(r'```html(.*?)(?:```|$)', text, re.DOTALL)
     if html_match:
         html = html_match.group(1).strip()
+        logger.debug("[Headless] Extracted HTML from ```html block (length: %d)", len(html))
+        print(f"[Headless] Extracted HTML from ```html block (length: {len(html)})")
     else:
         # Second priority: any block that looks like HTML
         # Remove frontmatter first
@@ -99,9 +106,16 @@ def extract_html_and_metadata(text: str) -> Tuple[Optional[str], Optional[str], 
         code_block_match = re.search(r'```(?:html)?(.*?)(?:```|$)', clean_text, re.DOTALL)
         if code_block_match:
             html = code_block_match.group(1).strip()
+            logger.debug("[Headless] Extracted HTML from generic code block (length: %d)", len(html))
+            print(f"[Headless] Extracted HTML from generic code block (length: {len(html)})")
         elif '<' in clean_text and '>' in clean_text:
             html = clean_text
+            logger.debug("[Headless] Extracted HTML from clean text (length: %d)", len(html))
+            print(f"[Headless] Extracted HTML from clean text (length: {len(html)})")
             
+    if not html:
+        logger.warning("[Headless] No HTML found in text")
+        print("[Headless] No HTML found in text")
     return html, name, emoji
 
 class HeadlessService:
@@ -114,6 +128,8 @@ class HeadlessService:
 
     @staticmethod
     def create_project(user: User, name: Optional[str] = None) -> Project:
+        logger.info("[Headless] Creating project for user: %s", user.username)
+        print(f"[Headless] Creating project for user: {user.username}")
         p_uuid = uuid.uuid4()
         project = Project.create(
             id=p_uuid.bytes,
@@ -123,10 +139,14 @@ class HeadlessService:
             updated_at=datetime.datetime.now()
         )
         project.id = p_uuid
+        logger.debug("[Headless] Project created with ID: %s", project.id)
+        print(f"[Headless] Project created with ID: {project.id}")
         return project
 
     @staticmethod
     def add_message(project_id: uuid.UUID, role: str, content: str, html: Optional[str] = None, image_url: Optional[str] = None):
+        logger.info("[Headless] Adding %s message to project: %s", role, project_id)
+        print(f"[Headless] Adding {role} message to project: {project_id}")
         ProjectMessage.create(
             id=uuid.uuid4().bytes,
             project_id=project_id.bytes,
@@ -139,6 +159,8 @@ class HeadlessService:
 
     @staticmethod
     def get_conversation_history(project: Project) -> List[Dict[str, Any]]:
+        logger.info("[Headless] Fetching conversation history for project: %s", project.id)
+        print(f"[Headless] Fetching conversation history for project: {project.id}")
         messages = []
         # Current logic: Always start with system prompt
         messages.append({"role": "system", "content": SYSTEM_PROMPT + FRONTMATTER_PROMPT_EXTRA})
@@ -172,4 +194,6 @@ class HeadlessService:
             else:
                 messages.append({"role": "assistant", "content": msg.content})
         
+        logger.debug("[Headless] Compiled %d messages for conversation history", len(messages))
+        print(f"[Headless] Compiled {len(messages)} messages for conversation history")
         return messages
