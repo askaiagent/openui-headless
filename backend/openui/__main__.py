@@ -91,17 +91,20 @@ if __name__ == "__main__":
             logger.info(
                 f"Starting LiteLLM in the background with config: {config_path} and path: {litellm_path}"
             )
+            litellm_log_path = Path.home() / ".openui" / "litellm.log"
+            litellm_log_path.parent.mkdir(parents=True, exist_ok=True)
+            litellm_log = open(litellm_log_path, "a")
+            
             litellm_process = subprocess.Popen(
                 [str(litellm_path), "--config", config_path, "--port", "4000"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=litellm_log,
+                stderr=subprocess.STDOUT,
                 text=True,
             )
             # Ensure litellm stays up for 5 seconds
             for i in range(5):
                 if litellm_process.poll() is not None:
-                    stdout, stderr = litellm_process.communicate()
-                    logger.error(f"LiteLLM failed to start:\n{stderr}")
+                    logger.error(f"LiteLLM failed to start. Check {litellm_log_path} for details.")
                     break
                 time.sleep(1)
         logger.info("Running API Server")
